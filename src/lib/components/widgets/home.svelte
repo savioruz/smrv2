@@ -424,8 +424,8 @@
 	</div>
 	<div class="flex w-full flex-col items-center justify-center gap-4">
 		{#if loading}
-			{#each Array(4) as id}
-				<SkeletonCard {id} />
+			{#each Array(4) as _}
+				<SkeletonCard />
 			{/each}
 		{:else if schedules.length > 0}
 			<div class="flex w-full max-w-xl items-center justify-between px-2">
@@ -458,7 +458,7 @@
 				{#if hasMore && !filterQuery}
 					<div bind:this={bottomElement} class="flex w-full justify-center py-4">
 						{#if loadingMore}
-							<SkeletonCard id={0} />
+							<SkeletonCard />
 						{/if}
 					</div>
 				{/if}
