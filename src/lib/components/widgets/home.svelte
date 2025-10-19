@@ -2,12 +2,13 @@
 	import Root from './root.svelte';
 	import BorderBeam from '$lib/components/ui/border-beam/border-beam.svelte';
 	import Combobox from '$lib/components/ui/combobox/combobox.svelte';
+	import AsyncCombobox from '$lib/components/ui/combobox/async-combobox.svelte';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
-	import type { PageData } from '../../../routes/$types';
 	import { Button } from '$lib/components/ui/button';
 	import { useFetch } from '$lib/hooks/use-fetch';
-	import type { SchedulesResponse } from '$lib/types/schedules';
-	import type { Schedule } from '$lib/types/schedules';
+	import type { GetStudentSchedulesResponse } from '$lib/types/schedules';
+	import type { StudentSchedule } from '$lib/types/schedules';
+	import type { GetStudyProgramsResponse } from '$lib/types/study-programs';
 	import { ChevronDown } from 'lucide-svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
@@ -18,11 +19,11 @@
 	import SkeletonCard from './skeleton-card.svelte';
 	import ScrollUp from './scroll-up.svelte';
 	import Marquee from '$lib/components/ui/marquee/marquee.svelte';
-	export let data: PageData;
+
 	let loading = false;
 	let error = false;
 	let errorMessage = '';
-	let schedules: Schedule[] = [];
+	let schedules: StudentSchedule[] = [];
 	let isSubmitted = false;
 	let hasMore = true;
 	let loadingMore = false;
@@ -32,7 +33,7 @@
 	let isOpen = false;
 
 	let searchParams = {
-		study_program: '',
+		study_program_name: '',
 		day_of_week: '',
 		course_code: '',
 		class_code: '',
@@ -43,7 +44,7 @@
 		page: 1,
 		limit: 10,
 		sort_by: '',
-		sort_order: ''
+		sort_dir: ''
 	};
 
 	const days = [
@@ -71,6 +72,49 @@
 		{ label: 'Ascending', value: 'asc' },
 		{ label: 'Descending', value: 'desc' }
 	];
+
+	const semesterOptions = [
+		{ label: '1', value: 'I' },
+		{ label: '2', value: 'II' },
+		{ label: '3', value: 'III' },
+		{ label: '4', value: 'IV' },
+		{ label: '5', value: 'V' },
+		{ label: '6', value: 'VI' },
+		{ label: '7', value: 'VII' },
+		{ label: '8', value: 'VIII' }
+	];
+
+	async function fetchStudyPrograms(query: string) {
+		try {
+			const queryParams = new URLSearchParams({
+				limit: '10',
+				sort_by: 'id',
+				sort_dir: 'asc'
+			});
+
+			if (query) {
+				queryParams.append('name', query);
+			}
+
+			const response = await useFetch<GetStudyProgramsResponse>(
+				`/v1/study-programs?${queryParams.toString()}`,
+				{
+					method: 'GET'
+				}
+			);
+
+			if (response?.data?.study_programs) {
+				return response.data.study_programs.map((program) => ({
+					label: program.name,
+					value: program.name
+				}));
+			}
+			return [];
+		} catch (error) {
+			console.error('Error fetching study programs:', error);
+			return [];
+		}
+	}
 
 	onMount(() => {
 		observer = new IntersectionObserver(
@@ -108,13 +152,13 @@
 				}
 			});
 
-			const response = await useFetch<SchedulesResponse>(`/schedules?${queryParams.toString()}`, {
+			const response = await useFetch<GetStudentSchedulesResponse>(`/v1/student-schedules?${queryParams.toString()}`, {
 				method: 'GET'
 			});
 
-			if (response?.data?.length) {
-				schedules = [...schedules, ...response.data];
-				hasMore = response.data.length === searchParams.limit;
+			if (response?.data?.student_schedules?.length) {
+				schedules = [...schedules, ...response.data.student_schedules];
+				hasMore = response.data.student_schedules.length === searchParams.limit;
 			} else {
 				hasMore = false;
 			}
@@ -128,7 +172,7 @@
 	const handleSearch = async () => {
 		isSubmitted = true;
 
-		if (!searchParams.study_program || !searchParams.day_of_week) {
+		if (!searchParams.study_program_name || !searchParams.day_of_week) {
 			error = true;
 			errorMessage = 'Program Studi dan Hari harus diisi.';
 			return;
@@ -149,13 +193,13 @@
 				}
 			});
 
-			const response = await useFetch<SchedulesResponse>(`/schedules?${queryParams.toString()}`, {
+			const response = await useFetch<GetStudentSchedulesResponse>(`/v1/student-schedules?${queryParams.toString()}`, {
 				method: 'GET'
 			});
 
-			if (response?.data?.length) {
-				schedules = response.data;
-				hasMore = response.data.length === searchParams.limit;
+			if (response?.data?.student_schedules?.length) {
+				schedules = response.data.student_schedules;
+				hasMore = response.data.student_schedules.length === searchParams.limit;
 			} else {
 				error = true;
 				errorMessage = 'Tidak ada jadwal yang ditemukan.';
@@ -172,7 +216,7 @@
 	};
 
 	const handleStudyProgramSelect = (value: string) => {
-		searchParams.study_program = value;
+		searchParams.study_program_name = value;
 		if (isSubmitted && value) {
 			error = false;
 			errorMessage = '';
@@ -196,22 +240,20 @@
 			schedule.course_code.toLowerCase().includes(query) ||
 			schedule.class_code.toLowerCase().includes(query) ||
 			schedule.room_number.toLowerCase().includes(query) ||
-			schedule.lecturer?.toLowerCase().includes(query) ||
-			schedule.study_program.toLowerCase().includes(query) ||
-			schedule.day.toLowerCase().includes(query) ||
+			schedule.lecturer_name?.toLowerCase().includes(query) ||
+			schedule.study_program_name.toLowerCase().includes(query) ||
+			schedule.day_of_week.toLowerCase().includes(query) ||
 			schedule.start_time.toLowerCase().includes(query) ||
 			schedule.end_time.toLowerCase().includes(query) ||
 			schedule.semester.toString().includes(query)
 		);
 	});
-
-	console.log(schedules);
 </script>
 
 <Marquee pauseOnHover class="[--duration:20s]">
 	<div class="flex items-center gap-4">
 		<span
-			>✨ Support saya jika suka dengan website ini <a
+			>✨ Support saya jika suka dengan website ini melalui <a
 				href="https://trakteer.id/savioruz"
 				target="_blank"
 				class="text-blue-500 hover:underline">Trakteer</a
@@ -245,15 +287,17 @@
 				</div>
 			</div>
 			<div class="my-4 flex w-full flex-col gap-4">
-				<Combobox
-					options={data.studyPrograms}
+				<AsyncCombobox
+					fetchOptions={fetchStudyPrograms}
 					placeholder="Pilih Program Studi"
-					searchPlaceholder="Pilih Program Studi"
+					searchPlaceholder="Cari Program Studi..."
 					emptyText="Program Studi tidak ditemukan."
+					loadingText="Memuat..."
 					buttonClass="w-full"
 					onSelect={handleStudyProgramSelect}
 					required
-					showError={isSubmitted && !searchParams.study_program}
+					showError={isSubmitted && !searchParams.study_program_name}
+					debounceMs={300}
 				/>
 				<Combobox
 					options={days}
@@ -302,12 +346,22 @@
 								placeholder="Ruangan"
 								bind:value={searchParams.room_number}
 							/>
-							<Input
-								type="text"
-								class="text-xs"
-								placeholder="Semester"
-								bind:value={searchParams.semester}
-							/>
+							<Select.Root type="single" bind:value={searchParams.semester}>
+								<Select.Trigger
+									class={cn(searchParams.semester ? 'text-xs' : 'text-xs text-muted-foreground')}
+								>
+									{#if searchParams.semester}
+										Semester {semesterOptions.find((option) => option.value === searchParams.semester)?.label}
+									{:else}
+										Semester
+									{/if}
+								</Select.Trigger>
+								<Select.Content>
+									{#each semesterOptions as option}
+										<Select.Item value={option.value}>{option.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
 							<Input
 								type="text"
 								class="text-xs"
@@ -332,12 +386,12 @@
 									{/each}
 								</Select.Content>
 							</Select.Root>
-							<Select.Root type="single" bind:value={searchParams.sort_order}>
+							<Select.Root type="single" bind:value={searchParams.sort_dir}>
 								<Select.Trigger
-									class={cn(searchParams.sort_order ? 'text-xs' : 'text-xs text-muted-foreground')}
+									class={cn(searchParams.sort_dir ? 'text-xs' : 'text-xs text-muted-foreground')}
 								>
-									{#if searchParams.sort_order}
-										{sortOrderOptions.find((option) => option.value === searchParams.sort_order)
+									{#if searchParams.sort_dir}
+										{sortOrderOptions.find((option) => option.value === searchParams.sort_dir)
 											?.label}
 									{:else}
 										Urutan

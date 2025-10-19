@@ -30,33 +30,6 @@
 			<a href="/" class="text-md font-bold md:text-lg" data-sveltekit-preload-data>smrv2</a>
 		</div>
 		<div class="flex items-center gap-1 md:gap-4">
-			{#if $page.data.isAuthenticated}
-				<Button
-					href="/user/dashboard"
-					size="icon"
-					variant={$page.url.pathname === '/user/dashboard' ? 'outline' : 'ghost'}
-					data-sveltekit-preload-data="hover"
-				>
-					<User />
-				</Button>
-				<Button
-					variant="ghost"
-					size="icon"
-					data-sveltekit-preload-data="hover"
-					onclick={handleLogout}
-				>
-					<LogOut />
-				</Button>
-			{:else}
-				<Button
-					href="/auth/login"
-					variant={$page.url.pathname === '/auth/login' ? 'outline' : 'ghost'}
-					data-sveltekit-preload-data="hover"
-					aria-label="Login"
-				>
-					<User />
-				</Button>
-			{/if}
 			<ThemeToggle />
 		</div>
 	</nav>

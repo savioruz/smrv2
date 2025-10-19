@@ -9,8 +9,9 @@ export interface Response<T> {
 }
 
 export interface ErrorResponse {
-	request_id: string;
-	errors: {
-		[key: string]: string[];
-	};
+	error: string;
+}
+
+export interface MessageResponse {
+	message: string;
 }

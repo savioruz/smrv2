@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import { Motion, useMotionValue, useMotionTemplate } from 'svelte-motion';
-	import type { Schedule } from '$lib/types/schedules';
+	import type { StudentSchedule } from '$lib/types/schedules';
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { ChevronDown } from 'lucide-svelte';
 
 	let className = '';
 	export { className as class };
 
-	export let schedule: Schedule;
+	export let schedule: StudentSchedule;
 	let isOpen = false;
 
 	// Spotlight effect
@@ -61,7 +61,7 @@
 						</div>
 						<div class="flex items-center gap-2">
 							<p class="text-sm text-foreground">
-								{schedule.day}
+								{schedule.day_of_week}
 							</p>
 							<span class="text-muted-foreground">•</span>
 							<p class="text-sm text-foreground">
@@ -85,7 +85,7 @@
 				<div class="flex flex-col gap-2 text-sm">
 					<div class="flex items-start justify-between gap-2">
 						<p class="text-muted-foreground">{schedule.course_code}</p>
-						<p class="text-muted-foreground">{schedule.study_program}</p>
+						<p class="text-muted-foreground">{schedule.study_program_name}</p>
 					</div>
 					<div class="flex items-center justify-between gap-2">
 						<p class="text-muted-foreground">Semester {schedule.semester}</p>
@@ -93,8 +93,8 @@
 							{schedule.credits} SKS
 						</p>
 					</div>
-					{#if schedule.lecturer}
-						<p class="text-muted-foreground">{schedule.lecturer}</p>
+					{#if schedule.lecturer_name}
+						<p class="text-muted-foreground">{schedule.lecturer_name}</p>
 					{/if}
 				</div>
 			</div>
