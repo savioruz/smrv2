@@ -236,16 +236,16 @@
 
 		const query = filterQuery.toLowerCase();
 		return (
-			schedule.course_name.toLowerCase().includes(query) ||
-			schedule.course_code.toLowerCase().includes(query) ||
-			schedule.class_code.toLowerCase().includes(query) ||
-			schedule.room_number.toLowerCase().includes(query) ||
+			schedule.course_name?.toLowerCase().includes(query) ||
+			schedule.course_code?.toLowerCase().includes(query) ||
+			schedule.class_code?.toLowerCase().includes(query) ||
+			schedule.room_number?.toLowerCase().includes(query) ||
 			schedule.lecturer_name?.toLowerCase().includes(query) ||
-			schedule.study_program_name.toLowerCase().includes(query) ||
-			schedule.day_of_week.toLowerCase().includes(query) ||
-			schedule.start_time.toLowerCase().includes(query) ||
-			schedule.end_time.toLowerCase().includes(query) ||
-			schedule.semester.toString().includes(query)
+			schedule.study_program_name?.toLowerCase().includes(query) ||
+			schedule.day_of_week?.toLowerCase().includes(query) ||
+			schedule.start_time?.toLowerCase().includes(query) ||
+			schedule.end_time?.toLowerCase().includes(query) ||
+			schedule.semester?.toString().includes(query)
 		);
 	});
 </script>

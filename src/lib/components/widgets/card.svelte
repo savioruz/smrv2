@@ -49,23 +49,23 @@
 			<div class="flex flex-col p-4">
 				<div class="flex w-full items-center justify-between">
 					<div class="flex flex-col items-start justify-center gap-1">
-						<h3 class="text-md my-1 line-clamp-1 font-semibold">{schedule.course_name}</h3>
+						<h3 class="text-md my-1 line-clamp-1 font-semibold">{schedule.course_name || 'N/A'}</h3>
 						<div class="flex items-center gap-2">
 							<p class="text-sm text-foreground">
-								Kelas {schedule.class_code}
+								Kelas {schedule.class_code || '-'}
 							</p>
 							<span class="text-muted-foreground">•</span>
 							<p class="text-sm text-foreground">
-								{schedule.room_number}
+								{schedule.room_number || '-'}
 							</p>
 						</div>
 						<div class="flex items-center gap-2">
 							<p class="text-sm text-foreground">
-								{schedule.day_of_week}
+								{schedule.day_of_week || '-'}
 							</p>
 							<span class="text-muted-foreground">•</span>
 							<p class="text-sm text-foreground">
-								{schedule.start_time} - {schedule.end_time}
+								{schedule.start_time || '-'} - {schedule.end_time || '-'}
 							</p>
 						</div>
 					</div>
@@ -84,13 +84,13 @@
 			<div class="space-y-2 px-4 pb-4">
 				<div class="flex flex-col gap-2 text-sm">
 					<div class="flex items-start justify-between gap-2">
-						<p class="text-muted-foreground">{schedule.course_code}</p>
-						<p class="text-muted-foreground">{schedule.study_program_name}</p>
+						<p class="text-muted-foreground">{schedule.course_code || '-'}</p>
+						<p class="text-muted-foreground">{schedule.study_program_name || '-'}</p>
 					</div>
 					<div class="flex items-center justify-between gap-2">
-						<p class="text-muted-foreground">Semester {schedule.semester}</p>
+						<p class="text-muted-foreground">Semester {schedule.semester || '-'}</p>
 						<p class="text-muted-foreground">
-							{schedule.credits} SKS
+							{schedule.credits || 0} SKS
 						</p>
 					</div>
 					{#if schedule.lecturer_name}
