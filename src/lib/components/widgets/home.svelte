@@ -19,11 +19,13 @@
 	import SkeletonCard from './skeleton-card.svelte';
 	import ScrollUp from './scroll-up.svelte';
 	import Marquee from '$lib/components/ui/marquee/marquee.svelte';
+	import Skeleton from '../ui/skeleton/skeleton.svelte';
 
 	let loading = $state(false);
 	let error = $state(false);
 	let errorMessage = $state('');
 	let schedules = $state<StudentSchedule[]>([]);
+	let totalData = $state(0);
 	let isSubmitted = $state(false);
 	let hasMore = $state(true);
 	let loadingMore = $state(false);
@@ -165,7 +167,7 @@
 
 			if (response?.data?.student_schedules?.length) {
 				schedules = [...schedules, ...response.data.student_schedules];
-				hasMore = response.data.student_schedules.length === searchParams.limit;
+				hasMore = searchParams.page < (response.data.total_page || 1);
 			} else {
 				hasMore = false;
 			}
@@ -209,7 +211,8 @@
 
 			if (response?.data?.student_schedules?.length) {
 				schedules = response.data.student_schedules;
-				hasMore = response.data.student_schedules.length === searchParams.limit;
+				totalData = response.data.total_data;
+				hasMore = (response.data.total_page || 1) > 1;
 			} else {
 				error = true;
 				errorMessage = 'Tidak ada jadwal yang ditemukan.';
@@ -258,6 +261,7 @@
 			sort_dir: ''
 		};
 		schedules = [];
+		totalData = 0;
 		error = false;
 		errorMessage = '';
 		isSubmitted = false;
@@ -477,7 +481,7 @@
 					{#if filterQuery && filteredSchedules.length !== schedules.length}
 						Showing {filteredSchedules.length} of {schedules.length}
 					{:else}
-						{schedules.length} results found
+						Showing {schedules.length} of {totalData} results
 					{/if}
 				</h4>
 				<div class="relative flex w-[60%] items-center justify-start md:w-1/2">
