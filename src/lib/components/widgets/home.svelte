@@ -9,6 +9,7 @@
 	import type { GetStudentSchedulesResponse } from '$lib/types/schedules';
 	import type { StudentSchedule } from '$lib/types/schedules';
 	import type { GetStudyProgramsResponse } from '$lib/types/study-programs';
+	import type { StudyProgram } from '$lib/types/study-programs';
 	import { ChevronDown } from 'lucide-svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
@@ -20,6 +21,14 @@
 	import ScrollUp from './scroll-up.svelte';
 	import Marquee from '$lib/components/ui/marquee/marquee.svelte';
 	import Skeleton from '../ui/skeleton/skeleton.svelte';
+
+	interface Props {
+		data: {
+			initialStudyPrograms?: StudyProgram[];
+		};
+	}
+
+	let { data }: Props = $props();
 
 	let loading = $state(false);
 	let error = $state(false);
@@ -90,6 +99,14 @@
 
 	async function fetchStudyPrograms(query: string) {
 		try {
+			// If no query and we have initial data, return it
+			if (!query && data.initialStudyPrograms && data.initialStudyPrograms.length > 0) {
+				return data.initialStudyPrograms.map((program) => ({
+					label: program.name,
+					value: program.id.toString()
+				}));
+			}
+
 			const queryParams = new URLSearchParams({
 				limit: '10',
 				sort_by: 'id',
