@@ -23,6 +23,7 @@
 		required?: boolean;
 		showError?: boolean;
 		debounceMs?: number;
+		value?: string;
 	}>();
 
 	const {
@@ -35,17 +36,26 @@
 		onSelect,
 		required = false,
 		showError = false,
-		debounceMs = 300
+		debounceMs = 300,
+		value = ''
 	} = props;
 
 	let open = $state(false);
 	let triggerRef = $state<HTMLButtonElement | null>(null);
-	let selectedOption = $state('');
+	let selectedOption = $state(value);
 	let selectedLabel = $state('');
 	let options = $state<Option[]>([]);
 	let isLoading = $state(false);
 	let searchTerm = $state('');
 	let searchTimeout: number | null = null;
+
+	// Sync with external value prop
+	$effect(() => {
+		selectedOption = value;
+		if (!value) {
+			selectedLabel = '';
+		}
+	});
 
 	const selectedValue = $derived(selectedLabel || options.find((f: Option) => f.value === selectedOption)?.label);
 

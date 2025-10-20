@@ -21,6 +21,7 @@
 		onSelect?: (value: string) => void;
 		required?: boolean;
 		showError?: boolean;
+		value?: string;
 	}>();
 
 	const {
@@ -31,12 +32,18 @@
 		buttonClass = '',
 		onSelect,
 		required = false,
-		showError = false
+		showError = false,
+		value = ''
 	} = props;
 
 	let open = $state(false);
 	let triggerRef = $state<HTMLButtonElement>(null!);
-	let selectedOption = $state('');
+	let selectedOption = $state(value);
+
+	// Sync with external value prop
+	$effect(() => {
+		selectedOption = value;
+	});
 
 	const selectedValue = $derived(options.find((f: Option) => f.value === selectedOption)?.label);
 

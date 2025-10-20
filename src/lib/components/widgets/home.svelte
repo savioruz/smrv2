@@ -20,19 +20,21 @@
 	import ScrollUp from './scroll-up.svelte';
 	import Marquee from '$lib/components/ui/marquee/marquee.svelte';
 
-	let loading = false;
-	let error = false;
-	let errorMessage = '';
-	let schedules: StudentSchedule[] = [];
-	let isSubmitted = false;
-	let hasMore = true;
-	let loadingMore = false;
+	let loading = $state(false);
+	let error = $state(false);
+	let errorMessage = $state('');
+	let schedules = $state<StudentSchedule[]>([]);
+	let isSubmitted = $state(false);
+	let hasMore = $state(true);
+	let loadingMore = $state(false);
 	let observer: IntersectionObserver;
-	let bottomElement: HTMLDivElement;
-	let filterQuery = '';
-	let isOpen = false;
+	let bottomElement = $state<HTMLDivElement>();
+	let filterQuery = $state('');
+	let isOpen = $state(false);
+	let resetKey = $state(0);
 
-	let searchParams = {
+	let searchParams = $state({
+		study_program_id: '',
 		study_program_name: '',
 		day_of_week: '',
 		course_code: '',
@@ -45,7 +47,7 @@
 		limit: 10,
 		sort_by: '',
 		sort_dir: ''
-	};
+	});
 
 	const days = [
 		{ label: 'Senin', value: 'Senin' },
@@ -106,7 +108,7 @@
 			if (response?.data?.study_programs) {
 				return response.data.study_programs.map((program) => ({
 					label: program.name,
-					value: program.name
+					value: program.id.toString()
 				}));
 			}
 			return [];
@@ -134,9 +136,11 @@
 		};
 	});
 
-	$: if (bottomElement) {
-		observer?.observe(bottomElement);
-	}
+	$effect(() => {
+		if (bottomElement) {
+			observer?.observe(bottomElement);
+		}
+	});
 
 	const loadMore = async () => {
 		if (loadingMore || !hasMore) return;
@@ -147,14 +151,17 @@
 		try {
 			const queryParams = new URLSearchParams();
 			Object.entries(searchParams).forEach(([key, value]) => {
-				if (value) {
+				if (key !== 'study_program_id' && key !== 'study_program_name' && value) {
 					queryParams.append(key, value.toString());
 				}
 			});
 
-			const response = await useFetch<GetStudentSchedulesResponse>(`/v1/student-schedules?${queryParams.toString()}`, {
-				method: 'GET'
-			});
+			const response = await useFetch<GetStudentSchedulesResponse>(
+				`/v1/student-schedules/study-programs/${searchParams.study_program_id}?${queryParams.toString()}`,
+				{
+					method: 'GET'
+				}
+			);
 
 			if (response?.data?.student_schedules?.length) {
 				schedules = [...schedules, ...response.data.student_schedules];
@@ -172,7 +179,7 @@
 	const handleSearch = async () => {
 		isSubmitted = true;
 
-		if (!searchParams.study_program_name || !searchParams.day_of_week) {
+		if (!searchParams.study_program_id || !searchParams.day_of_week) {
 			error = true;
 			errorMessage = 'Program Studi dan Hari harus diisi.';
 			return;
@@ -188,14 +195,17 @@
 		try {
 			const queryParams = new URLSearchParams();
 			Object.entries(searchParams).forEach(([key, value]) => {
-				if (value) {
+				if (key !== 'study_program_id' && key !== 'study_program_name' && value) {
 					queryParams.append(key, value.toString());
 				}
 			});
 
-			const response = await useFetch<GetStudentSchedulesResponse>(`/v1/student-schedules?${queryParams.toString()}`, {
-				method: 'GET'
-			});
+			const response = await useFetch<GetStudentSchedulesResponse>(
+				`/v1/student-schedules/study-programs/${searchParams.study_program_id}?${queryParams.toString()}`,
+				{
+					method: 'GET'
+				}
+			);
 
 			if (response?.data?.student_schedules?.length) {
 				schedules = response.data.student_schedules;
@@ -216,7 +226,7 @@
 	};
 
 	const handleStudyProgramSelect = (value: string) => {
-		searchParams.study_program_name = value;
+		searchParams.study_program_id = value;
 		if (isSubmitted && value) {
 			error = false;
 			errorMessage = '';
@@ -231,7 +241,32 @@
 		}
 	};
 
-	$: filteredSchedules = schedules.filter((schedule) => {
+	const handleReset = () => {
+		searchParams = {
+			study_program_id: '',
+			study_program_name: '',
+			day_of_week: '',
+			course_code: '',
+			class_code: '',
+			course_name: '',
+			room_number: '',
+			semester: '',
+			lecturer_name: '',
+			page: 1,
+			limit: 10,
+			sort_by: '',
+			sort_dir: ''
+		};
+		schedules = [];
+		error = false;
+		errorMessage = '';
+		isSubmitted = false;
+		filterQuery = '';
+		hasMore = true;
+		resetKey += 1; // Force re-render of components
+	};
+
+	const filteredSchedules = $derived(schedules.filter((schedule) => {
 		if (!filterQuery) return true;
 
 		const query = filterQuery.toLowerCase();
@@ -247,7 +282,7 @@
 			schedule.end_time?.toLowerCase().includes(query) ||
 			schedule.semester?.toString().includes(query)
 		);
-	});
+	}));
 </script>
 
 <Marquee pauseOnHover class="[--duration:20s]">
@@ -287,6 +322,7 @@
 				</div>
 			</div>
 			<div class="my-4 flex w-full flex-col gap-4">
+				{#key resetKey}
 				<AsyncCombobox
 					fetchOptions={fetchStudyPrograms}
 					placeholder="Pilih Program Studi"
@@ -296,8 +332,9 @@
 					buttonClass="w-full"
 					onSelect={handleStudyProgramSelect}
 					required
-					showError={isSubmitted && !searchParams.study_program_name}
+					showError={isSubmitted && !searchParams.study_program_id}
 					debounceMs={300}
+					value={searchParams.study_program_id}
 				/>
 				<Combobox
 					options={days}
@@ -308,8 +345,11 @@
 					onSelect={handleDaySelect}
 					required
 					showError={isSubmitted && !searchParams.day_of_week}
+					value={searchParams.day_of_week}
 				/>
+				{/key}
 				<Collapsible.Root class="my-2 w-full" bind:open={isOpen}>
+					<div class="flex w-full flex-row justify-between">
 					<Collapsible.Trigger class="flex items-center gap-2 text-sm text-muted-foreground">
 						<ChevronDown
 							class={cn(
@@ -320,6 +360,10 @@
 						Advanced Search
 						<span class="sr-only">Toggle</span>
 					</Collapsible.Trigger>
+					<button onclick={handleReset} class="text-sm text-muted-foreground hover:text-foreground">
+						Reset
+					</button>
+					</div>
 					<Collapsible.Content class="mt-4 space-y-4">
 						<div class="grid grid-cols-2 gap-4">
 							<Input

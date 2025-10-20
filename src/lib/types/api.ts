@@ -1,11 +1,7 @@
 export interface Response<T> {
 	data?: T;
-	paging?: {
-		page: number;
-		limit: number;
-		total_page: number;
-		total_count: number;
-	};
+	total_page?: number;
+	total_data?: number;
 }
 
 export interface ErrorResponse {
